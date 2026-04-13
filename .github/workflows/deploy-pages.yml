@@ -51,15 +51,20 @@ jobs:
           cache: npm
 
       - run: npm ci
-      - run: npm run build
+      - name: Build (base path from repo name via GITHUB_REPOSITORY)
+        run: npm run build
+        env:
+          # Ensures assets load from /-mcqbuilder.veragrid/… not an old hard-coded path
+          GITHUB_REPOSITORY: ${{ github.repository }}
 
       - name: Copy index.html to 404.html (GitHub Pages SPA fallback)
         run: cp dist/index.html dist/404.html
 
       - name: Verify production base path in index.html
         run: |
-          grep -q -- '-mcqbuilder.veragrid' dist/index.html || {
-            echo "::error::dist/index.html missing GitHub Pages base path"
+          NAME='${{ github.event.repository.name }}'
+          grep -qF "/${NAME}/" dist/index.html || {
+            echo "::error::dist/index.html missing expected base path /${NAME}/"
             cat dist/index.html
             exit 1
           }
