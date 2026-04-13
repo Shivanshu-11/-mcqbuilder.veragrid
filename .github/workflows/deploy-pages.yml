@@ -48,8 +48,8 @@ jobs:
           node-version: "22"
           cache: npm
 
-      - run: npm ci
-      # Do not set NODE_ENV=production before npm ci — it skips devDependencies and breaks `vite`.
+      # --include=dev: install devDependencies even if NODE_ENV=production (repo/org env)
+      - run: npm ci --include=dev
       - name: Build (base path from repo name via GITHUB_REPOSITORY)
         run: npm run build
         env:
