@@ -23,9 +23,11 @@ permissions:
   pages: write
   id-token: write
 
+# Queue runs instead of canceling: cancel-in-progress:true aborts the deploy job when you push
+# again, which triggers "higher priority waiting request for pages" / canceled deploy.
 concurrency:
   group: pages
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   build:
