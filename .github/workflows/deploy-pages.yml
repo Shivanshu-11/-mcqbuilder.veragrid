@@ -1,5 +1,15 @@
-# First-time setup: Repository → Settings → Pages → Build and deployment → Source: "GitHub Actions".
-# Avoid actions/configure-pages here until that is done; otherwise "Get Pages site" returns 404.
+# -----------------------------------------------------------------------------
+# GitHub Pages (Vite static build)
+#
+# 1) One-time: Repo → Settings → Pages → Build and deployment → Source: "GitHub Actions"
+# 2) Do NOT add actions/configure-pages — it calls "Get Pages site" and returns 404 until
+#    Pages is already configured; GitHub's UI setup is enough.
+# 3) If Actions still show configure-pages errors, another workflow exists on GitHub.
+#    Open: Code → .github/workflows → delete any file that contains configure-pages
+#    (e.g. "Static HTML" template), or merge this branch so only this file remains.
+#
+# Live site: https://shivanshu-11.github.io/-mcqbuilder.veragrid/
+# -----------------------------------------------------------------------------
 
 name: Deploy to GitHub Pages
 
@@ -20,8 +30,20 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      NODE_ENV: production
     steps:
       - uses: actions/checkout@v4
+
+      - name: Reject workflows that use actions/configure-pages
+        run: |
+          set -e
+          bad=$(grep -rE --include='*.yml' --include='*.yaml' '^[[:space:]]*-[[:space:]]*uses:[[:space:]]*actions/configure-pages' .github/workflows 2>/dev/null || true)
+          if [ -n "$bad" ]; then
+            echo "::error::Remove configure-pages from GitHub Actions. It causes 404 until Pages is enabled and is not needed for Vite. Offending file(s):"
+            echo "$bad"
+            exit 1
+          fi
 
       - uses: actions/setup-node@v4
         with:
@@ -30,6 +52,17 @@ jobs:
 
       - run: npm ci
       - run: npm run build
+
+      - name: Copy index.html to 404.html (GitHub Pages SPA fallback)
+        run: cp dist/index.html dist/404.html
+
+      - name: Verify production base path in index.html
+        run: |
+          grep -q -- '-mcqbuilder.veragrid' dist/index.html || {
+            echo "::error::dist/index.html missing GitHub Pages base path"
+            cat dist/index.html
+            exit 1
+          }
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v4
