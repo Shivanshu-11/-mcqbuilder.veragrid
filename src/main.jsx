@@ -1,10 +1,16 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
+import { BrowserRouter } from "react-router-dom";
 import App from "./App.jsx";
 import "./index.css";
 
+const routerBasename =
+  import.meta.env.BASE_URL.replace(/\/$/, "") || undefined;
+
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
-    <App />
+    <BrowserRouter basename={routerBasename}>
+      <App />
+    </BrowserRouter>
   </React.StrictMode>
 );
