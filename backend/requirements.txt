@@ -1,0 +1,5 @@
+# Python backend for the VeraGrid MCQ builder.
+# VeraGridEngine pulls numpy/scipy/pandas/numba/highspy/ortools/etc. transitively.
+# LLM calls are made via the stdlib (urllib), so no anthropic/openai packages are needed.
+VeraGridEngine==5.6.38
+numpy>=2.2.0

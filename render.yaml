@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: veragrid-mcq-builder
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    # The "starter" instance (512 MB) may be tight for OPF/MCQ runs; bump to
+    # "standard" (2 GB) if you hit out-of-memory errors during solves.
+    plan: starter
+    healthCheckPath: /
+    envVars:
+      - key: PORT
+        value: "8080"

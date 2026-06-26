@@ -1,0 +1,31 @@
+{
+  "metadata": {
+    "easy_count": 0,
+    "medium_count": 0,
+    "hard_count": 0,
+    "total_questions": 0,
+    "categories": [],
+    "mode": "adversarial",
+    "rounds_run": 2,
+    "solver_score_overall": {
+      "correct": 0,
+      "wrong": 0,
+      "no_answer": 0
+    },
+    "solver_fool_rate_pct": {
+      "Easy": 0.0,
+      "Medium": 0.0,
+      "Hard": 0.0
+    }
+  },
+  "questions": [],
+  "opf_summary": {
+    "total_gen_P_MW": 185.7954,
+    "total_gen_Q_Mvar": 2.3665,
+    "total_load_P_MW": 185,
+    "total_load_Q_Mvar": 70,
+    "total_Ploss_MW": 0.7954,
+    "total_Qloss_Mvar": -67.6335,
+    "total_cost": 39.871796
+  }
+}

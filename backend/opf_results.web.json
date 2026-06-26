@@ -1,0 +1,307 @@
+{
+  "converged": true,
+  "iterations": 20,
+  "error": 5.913492698982877e-09,
+  "Sbase_MVA": 100.0,
+  "buses": [
+    {
+      "index": 0,
+      "name": "Bus 0",
+      "Vm": 2.232618,
+      "Va_deg": -0.0,
+      "P_MW": 0.0,
+      "Q_Mvar": 0.0
+    },
+    {
+      "index": 1,
+      "name": "Bus 1",
+      "Vm": 2.234084,
+      "Va_deg": 0.0351,
+      "P_MW": 0.0,
+      "Q_Mvar": 0.0
+    },
+    {
+      "index": 2,
+      "name": "Bus 2",
+      "Vm": 2.216969,
+      "Va_deg": -0.5464,
+      "P_MW": 0.0,
+      "Q_Mvar": 0.0
+    },
+    {
+      "index": 3,
+      "name": "Bus 3",
+      "Vm": 2.212736,
+      "Va_deg": -0.72,
+      "P_MW": 0.0,
+      "Q_Mvar": 0.0
+    },
+    {
+      "index": 4,
+      "name": "Bus 4",
+      "Vm": 2.234807,
+      "Va_deg": 0.0572,
+      "P_MW": 0.0,
+      "Q_Mvar": 0.0
+    },
+    {
+      "index": 5,
+      "name": "Bus 5",
+      "Vm": 2.221111,
+      "Va_deg": -0.359,
+      "P_MW": 0.0,
+      "Q_Mvar": 0.0
+    },
+    {
+      "index": 6,
+      "name": "Bus 6",
+      "Vm": 2.231148,
+      "Va_deg": -0.0193,
+      "P_MW": 0.0,
+      "Q_Mvar": 0.0
+    },
+    {
+      "index": 7,
+      "name": "Bus 7",
+      "Vm": 2.227887,
+      "Va_deg": -0.2018,
+      "P_MW": 0.0,
+      "Q_Mvar": 0.0
+    }
+  ],
+  "branches": [
+    {
+      "index": 0,
+      "name": "Line 0-1",
+      "from_bus": 0,
+      "to_bus": 1,
+      "Pf_MW": -3.4252,
+      "Qf_Mvar": -6.4031,
+      "Pt_MW": 3.4265,
+      "Qt_Mvar": -3.5695,
+      "loading_pct": 726.17,
+      "Ploss_MW": 0.0014,
+      "Qloss_Mvar": -9.9727,
+      "r": 0.05,
+      "x": 0.11,
+      "b": 0.02
+    },
+    {
+      "index": 1,
+      "name": "Line 1-2",
+      "from_bus": 1,
+      "to_bus": 2,
+      "Pf_MW": 62.5129,
+      "Qf_Mvar": 9.9947,
+      "Pt_MW": -62.1818,
+      "Qt_Mvar": -19.1556,
+      "loading_pct": 6330.69,
+      "Ploss_MW": 0.3312,
+      "Qloss_Mvar": -9.1609,
+      "r": 0.04,
+      "x": 0.09,
+      "b": 0.02
+    },
+    {
+      "index": 2,
+      "name": "Line 2-3",
+      "from_bus": 2,
+      "to_bus": 3,
+      "Pf_MW": 12.1818,
+      "Qf_Mvar": -0.8444,
+      "Pt_MW": -12.1633,
+      "Qt_Mvar": -4.0212,
+      "loading_pct": 1221.1,
+      "Ploss_MW": 0.0184,
+      "Qloss_Mvar": -4.8656,
+      "r": 0.06,
+      "x": 0.13,
+      "b": 0.01
+    },
+    {
+      "index": 3,
+      "name": "Line 1-4",
+      "from_bus": 1,
+      "to_bus": 4,
+      "Pf_MW": -2.7738,
+      "Qf_Mvar": -5.9707,
+      "Pt_MW": 2.7744,
+      "Qt_Mvar": -4.0134,
+      "loading_pct": 658.36,
+      "Ploss_MW": 0.0005,
+      "Qloss_Mvar": -9.9841,
+      "r": 0.03,
+      "x": 0.08,
+      "b": 0.02
+    },
+    {
+      "index": 4,
+      "name": "Line 4-5",
+      "from_bus": 4,
+      "to_bus": 5,
+      "Pf_MW": 41.1416,
+      "Qf_Mvar": 7.6722,
+      "Pt_MW": -40.9617,
+      "Qt_Mvar": -12.2765,
+      "loading_pct": 4185.08,
+      "Ploss_MW": 0.1798,
+      "Qloss_Mvar": -4.6042,
+      "r": 0.05,
+      "x": 0.1,
+      "b": 0.01
+    },
+    {
+      "index": 5,
+      "name": "Line 3-5",
+      "from_bus": 3,
+      "to_bus": 5,
+      "Pf_MW": -27.8367,
+      "Qf_Mvar": -10.9788,
+      "Pt_MW": 27.903,
+      "Qt_Mvar": 1.3482,
+      "loading_pct": 2992.35,
+      "Ploss_MW": 0.0663,
+      "Qloss_Mvar": -9.6306,
+      "r": 0.04,
+      "x": 0.12,
+      "b": 0.02
+    },
+    {
+      "index": 6,
+      "name": "Line 5-6",
+      "from_bus": 5,
+      "to_bus": 6,
+      "Pf_MW": -46.9413,
+      "Qf_Mvar": -14.0718,
+      "Pt_MW": 47.0834,
+      "Qt_Mvar": 9.4479,
+      "loading_pct": 4900.51,
+      "Ploss_MW": 0.1422,
+      "Qloss_Mvar": -4.6239,
+      "r": 0.03,
+      "x": 0.07,
+      "b": 0.01
+    },
+    {
+      "index": 7,
+      "name": "Line 6-7",
+      "from_bus": 6,
+      "to_bus": 7,
+      "Pf_MW": 14.4301,
+      "Qf_Mvar": -4.901,
+      "Pt_MW": -14.4091,
+      "Qt_Mvar": -4.9945,
+      "loading_pct": 1523.96,
+      "Ploss_MW": 0.0209,
+      "Qloss_Mvar": -9.8955,
+      "r": 0.05,
+      "x": 0.11,
+      "b": 0.02
+    },
+    {
+      "index": 8,
+      "name": "Line 0-7",
+      "from_bus": 0,
+      "to_bus": 7,
+      "Pf_MW": 20.6255,
+      "Qf_Mvar": 0.1095,
+      "Pt_MW": -20.5909,
+      "Qt_Mvar": -5.0055,
+      "loading_pct": 2062.58,
+      "Ploss_MW": 0.0347,
+      "Qloss_Mvar": -4.896,
+      "r": 0.04,
+      "x": 0.09,
+      "b": 0.01
+    }
+  ],
+  "generators": [
+    {
+      "index": 0,
+      "name": "Gen 1 (Slack)",
+      "bus": 0,
+      "P_MW": 17.2004,
+      "Q_Mvar": -6.2936,
+      "Pmin": 10.0,
+      "Pmax": 200.0,
+      "Cost": 20.0,
+      "Cost2": 0.02,
+      "Pcost": 3.440669
+    },
+    {
+      "index": 1,
+      "name": "Gen 2",
+      "bus": 1,
+      "P_MW": 63.1656,
+      "Q_Mvar": 0.4544,
+      "Pmin": 10.0,
+      "Pmax": 150.0,
+      "Cost": 18.0,
+      "Cost2": 0.025,
+      "Pcost": 11.379788
+    },
+    {
+      "index": 2,
+      "name": "Gen 3",
+      "bus": 4,
+      "P_MW": 43.9159,
+      "Q_Mvar": 3.6588,
+      "Pmin": 10.0,
+      "Pmax": 120.0,
+      "Cost": 22.0,
+      "Cost2": 0.03,
+      "Pcost": 9.667287
+    },
+    {
+      "index": 3,
+      "name": "Gen 4",
+      "bus": 6,
+      "P_MW": 61.5135,
+      "Q_Mvar": 4.5469,
+      "Pmin": 10.0,
+      "Pmax": 180.0,
+      "Cost": 25.0,
+      "Cost2": 0.015,
+      "Pcost": 15.384052
+    }
+  ],
+  "loads": [
+    {
+      "index": 0,
+      "name": "Load A",
+      "bus": 2,
+      "P_MW": 50.0,
+      "Q_Mvar": 20.0
+    },
+    {
+      "index": 1,
+      "name": "Load B",
+      "bus": 3,
+      "P_MW": 40.0,
+      "Q_Mvar": 15.0
+    },
+    {
+      "index": 2,
+      "name": "Load C",
+      "bus": 5,
+      "P_MW": 60.0,
+      "Q_Mvar": 25.0
+    },
+    {
+      "index": 3,
+      "name": "Load D",
+      "bus": 7,
+      "P_MW": 35.0,
+      "Q_Mvar": 10.0
+    }
+  ],
+  "summary": {
+    "total_gen_P_MW": 185.7954,
+    "total_gen_Q_Mvar": 2.3665,
+    "total_load_P_MW": 185.0,
+    "total_load_Q_Mvar": 70.0,
+    "total_Ploss_MW": 0.7954,
+    "total_Qloss_Mvar": -67.6335,
+    "total_cost": 39.871796
+  }
+}

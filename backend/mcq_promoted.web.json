@@ -1,0 +1,38 @@
+{
+  "summary": {
+    "seed": 42,
+    "rounds_run": 2,
+    "total_generated": 0,
+    "total_promoted": 0,
+    "capped_promoted": 0,
+    "by_tier": {
+      "Easy": {
+        "generated": 0,
+        "promoted": 0,
+        "delivered": 0,
+        "target": 500,
+        "solver_fool_rate_pct": 0.0
+      },
+      "Medium": {
+        "generated": 0,
+        "promoted": 0,
+        "delivered": 0,
+        "target": 500,
+        "solver_fool_rate_pct": 0.0
+      },
+      "Hard": {
+        "generated": 0,
+        "promoted": 0,
+        "delivered": 0,
+        "target": 500,
+        "solver_fool_rate_pct": 0.0
+      }
+    },
+    "solver_score_overall": {
+      "correct": 0,
+      "wrong": 0,
+      "no_answer": 0
+    }
+  },
+  "questions": []
+}
