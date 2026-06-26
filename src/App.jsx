@@ -51,6 +51,24 @@ function resolveAppPath(pathFromRoot) {
   return `${import.meta.env.BASE_URL}${tail}`;
 }
 
+/**
+ * Reads a JSON response from an /api/* call. If the response isn't JSON (e.g.
+ * the static GitHub Pages host returns HTML because there's no Python backend),
+ * throw a clear message instead of the browser's cryptic JSON.parse error.
+ */
+async function readApiJson(response) {
+  const text = await response.text();
+  try {
+    return JSON.parse(text);
+  } catch {
+    throw new Error(
+      "The backend didn't return JSON, so it isn't running on this host. " +
+        "This static site (e.g. GitHub Pages) can't run the Python backend. " +
+        "Use the local app (npm run dev) or the full-stack deployment to run OPF/MCQ/evaluation."
+    );
+  }
+}
+
 function clientToSvg(svg, clientX, clientY) {
   const pt = svg.createSVGPoint();
   pt.x = clientX;
@@ -2527,7 +2545,7 @@ function AppInner() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ model }),
       });
-      const payload = await response.json();
+      const payload = await readApiJson(response);
       if (!response.ok || !payload.ok) {
         throw new Error(payload.error || "Failed to run OPF.");
       }
@@ -2592,7 +2610,11 @@ function AppInner() {
         if (!response.ok || !payload || !payload.ok) {
           const message =
             payload?.error ||
-            (response.ok
+            (!payload
+              ? "The backend didn't return JSON, so it isn't running on this host. " +
+                "This static site (e.g. GitHub Pages) can't run the Python backend. " +
+                "Use the local app (npm run dev) or the full-stack deployment."
+              : response.ok
               ? "MCQ generation finished but returned no questions."
               : `Server returned HTTP ${response.status}.`);
           setMcqStatus("error");
@@ -2677,7 +2699,7 @@ function AppInner() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ model, mode, prompt, openAiApiKey, claudeApiKey, cursorApiKey, circuitModel }),
       });
-      const payload = await response.json();
+      const payload = await readApiJson(response);
       if (!response.ok || !payload.ok) {
         throw new Error(payload.error || "Failed to run model evaluation.");
       }
@@ -2701,7 +2723,7 @@ function AppInner() {
           answerFormat: "letter_only",
         }),
       });
-      const payload = await response.json();
+      const payload = await readApiJson(response);
       if (!response.ok || !payload.ok) {
         throw new Error(payload.error || "Failed to build prompt from current circuit.");
       }
