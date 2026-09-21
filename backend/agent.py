@@ -474,8 +474,6 @@ def run_cursor_agent(
         )
 
     key = (api_key or "").strip() or os.environ.get("CURSOR_API_KEY") or ""
-    if not key:
-        raise RuntimeError("Cursor API key required for cursor-agent runs.")
 
     if not os.path.isdir(workspace):
         os.makedirs(workspace, exist_ok=True)
@@ -504,9 +502,10 @@ def run_cursor_agent(
         "--output-format", "stream-json",
         "--workspace", workspace,
         "--model", cli_model,
-        "--api-key", key,
         "--trust",
     ]
+    if key:
+        args.extend(["--api-key", key])
     if no_tools:
         args.extend(["--mode", "ask"])
     else:

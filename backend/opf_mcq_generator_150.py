@@ -151,26 +151,106 @@ def numeric_dist(
     floor: float = 1.0,
     d: int = 4,
 ) -> List[float]:
-    out = set()
+    """Distractors on a jittered ladder with the correct value at a random rung.
+
+    No option is an exact multiple, negation, or midpoint of the correct value,
+    and the correct value's sorted position among the options is uniform, so
+    the option set alone carries no signal about which entry is correct.
+    """
     mag = max(abs(correct), floor)
-    strats = [
-        lambda c: c + rng.uniform(-spread, spread) * mag,
-        lambda c: c * rng.uniform(0.85, 1.15),
-        lambda c: c + rng.choice([-2, -1, 1, 2]) * 0.1 * mag,
-        lambda c: -c + rng.uniform(-0.05, 0.05) * mag,
-        lambda c: c * rng.choice([0.5, 2.0, 0.9, 1.1]),
-    ]
     attempts = 0
-    while len(out) < n and attempts < 300:
+    while attempts < 300:
         attempts += 1
-        cand = round(rng.choice(strats)(correct), d)
-        if abs(cand - correct) > 10 ** (-d):
-            out.add(cand)
+        k = rng.randint(0, n)  # rung occupied by the correct value
+        step = spread * mag * rng.uniform(0.5, 1.5)
+        cands: List[float] = []
+        ok = True
+        for i in range(n + 1):
+            if i == k:
+                continue
+            cand = round(correct + (i - k) * step * rng.uniform(0.75, 1.25), d)
+            if abs(cand - correct) <= 10 ** (-d) or cand in cands:
+                ok = False
+                break
+            cands.append(cand)
+        if ok:
+            return cands
 
+    out: List[float] = []
     while len(out) < n:
-        out.add(round(correct + rng.uniform(0.5, 2.0), d))
+        cand = round(correct + rng.choice([-1, 1]) * rng.uniform(0.3, 2.0) * mag, d)
+        if abs(cand - correct) > 10 ** (-d) and cand not in out:
+            out.append(cand)
+    return out
 
-    return list(out)[:n]
+
+def mistake_dist(
+    cands: Sequence[float],
+    correct: float,
+    rng: random.Random,
+    d: int = 4,
+    rel: float = 0.06,
+) -> List[float]:
+    """Jitter mistake-derived distractors (wrong formula, swapped sign, ...).
+
+    Without jitter these are exact functions of the correct value (2x, -x,
+    100 - x, arithmetic progressions), which lets a model identify the correct
+    answer as the value the others derive from. The jitter keeps each
+    distractor near the plausible mistake while breaking the exact relation.
+    """
+    out: List[float] = []
+    for v in cands:
+        scale = max(abs(v), abs(correct), 10 ** (-d))
+        for _ in range(60):
+            # displace by at least half of `rel` so the jittered value can't be
+            # matched back to the exact mistake formula within a tight tolerance
+            shift = rng.choice([-1, 1]) * rng.uniform(rel / 2, rel) * scale
+            trial = round(v + shift, d)
+            if abs(trial - correct) > 10 ** (-d) and trial not in out:
+                out.append(trial)
+                break
+
+    # swap one or two mistakes for ladder values drawn uniformly from either
+    # side of the correct answer, so the mistakes' tendency to straddle (or
+    # one-side) the truth doesn't bias the correct answer's sorted position
+    if out:
+        idxs = list(range(len(out)))
+        rng.shuffle(idxs)
+        n_swap = 1 + (rng.random() < 0.5)
+        ladder = [x for x in numeric_dist(correct, rng, d=d) if abs(x - correct) > 10 ** (-d)]
+        for i in idxs[:n_swap]:
+            while ladder:
+                x = ladder.pop(rng.randrange(len(ladder)))
+                if x not in out:
+                    out[i] = x
+                    break
+
+    if len(out) < len(cands):
+        for x in numeric_dist(correct, rng, n=len(cands), d=d):
+            if len(out) >= len(cands):
+                break
+            if x not in out:
+                out.append(x)
+    return out
+
+
+def int_dist(correct: int, rng: random.Random, k: int = 3, lo: int = 0) -> List[str]:
+    """Integer distractors drawn from both sides of the correct value so its
+    sorted position among the options is not fixed."""
+    offsets = [o for o in range(-4, 5) if o != 0 and correct + o >= lo]
+    rng.shuffle(offsets)
+    out: List[int] = []
+    for o in offsets:
+        v = correct + o
+        if v not in out:
+            out.append(v)
+        if len(out) == k:
+            break
+    bump = 5
+    while len(out) < k:
+        out.append(correct + bump)
+        bump += 3
+    return [str(v) for v in out]
 
 
 def make_mcq(
@@ -235,7 +315,7 @@ def t_count_elements(R: dict, rng: random.Random, C: List[int]) -> List[MCQ]:
                 qid=nid(C),
                 question=f"How many {label} are in the system?",
                 correct=str(n),
-                distractors=[str(max(n - 1, 0)), str(n + 1), str(n + 2)],
+                distractors=int_dist(n, rng),
                 category="Network Topology",
                 difficulty="Easy",
                 explanation=f"The system contains {n} {label}.",
@@ -570,7 +650,7 @@ def t_system_info(R: dict, rng: random.Random, C: List[int]) -> List[MCQ]:
             qid=nid(C),
             question="How many iterations did the solver take?",
             correct=str(iters),
-            distractors=[str(max(iters - 3, 0)), str(iters + 5), str(iters + 10)],
+            distractors=int_dist(iters, rng),
             category="Solver Info",
             difficulty="Easy",
             explanation=f"The solver completed in {iters} iterations.",
@@ -579,12 +659,16 @@ def t_system_info(R: dict, rng: random.Random, C: List[int]) -> List[MCQ]:
         )
     )
 
+    standard_bases = [1.0, 10.0, 25.0, 50.0, 100.0, 200.0, 500.0, 1000.0]
+    base_wrong = [b for b in standard_bases if abs(b - sb) > 1e-9]
+    rng.shuffle(base_wrong)
+
     qs.append(
         make_mcq(
             qid=nid(C),
             question="What is the system base power?",
             correct=fmu(sb, "MVA"),
-            distractors=[fmu(sb / 10, "MVA"), fmu(sb / 2, "MVA"), fmu(sb * 10, "MVA")],
+            distractors=[fmu(b, "MVA") for b in base_wrong[:3]],
             category="System Parameters",
             difficulty="Easy",
             explanation=f"The base apparent power is Sbase = {fmu(sb, 'MVA')}.",
@@ -614,9 +698,8 @@ def t_power_balance(R: dict, rng: random.Random, C: List[int]) -> List[MCQ]:
             question="What is the total active power generation implied by power balance?",
             correct=fmu(p_gen, "MW"),
             distractors=[
-                fmu(p_load, "MW"),
-                fmu(p_load - p_loss, "MW"),
-                fmu(p_load + 2 * p_loss, "MW"),
+                fmu(x, "MW")
+                for x in mistake_dist([p_load, p_load - p_loss, p_load + 2 * p_loss], p_gen, rng)
             ],
             category="Power Balance",
             difficulty="Medium",
@@ -639,9 +722,8 @@ def t_power_balance(R: dict, rng: random.Random, C: List[int]) -> List[MCQ]:
             question="What is the total reactive power generation implied by power balance?",
             correct=fmu(q_gen, "Mvar"),
             distractors=[
-                fmu(q_load, "Mvar"),
-                fmu(q_load - q_loss, "Mvar"),
-                fmu(q_load + 2 * q_loss, "Mvar"),
+                fmu(x, "Mvar")
+                for x in mistake_dist([q_load, q_load - q_loss, q_load + 2 * q_loss], q_gen, rng)
             ],
             category="Reactive Power Balance",
             difficulty="Medium",
@@ -671,9 +753,8 @@ def t_per_unit_gen(R: dict, rng: random.Random, C: List[int]) -> List[MCQ]:
                 question=ask_for_gen(gen, "the per-unit active power output"),
                 correct=fmu(pu, "p.u.", 6),
                 distractors=[
-                    fmu(p, "p.u.", 6),
-                    fmu(pu * 10, "p.u.", 6),
-                    fmu(pu / 2, "p.u.", 6),
+                    fmu(x, "p.u.", 6)
+                    for x in mistake_dist([p, pu * 10, pu / 2], pu, rng, d=6)
                 ],
                 category="Per-Unit System",
                 difficulty="Medium",
@@ -703,9 +784,8 @@ def t_per_unit_load(R: dict, rng: random.Random, C: List[int]) -> List[MCQ]:
                 question=ask_for_load(ld, "the per-unit active power demand"),
                 correct=fmu(pu, "p.u.", 6),
                 distractors=[
-                    fmu(p, "p.u.", 6),
-                    fmu(pu * 10, "p.u.", 6),
-                    fmu(pu / 2, "p.u.", 6),
+                    fmu(x, "p.u.", 6)
+                    for x in mistake_dist([p, pu * 10, pu / 2], pu, rng, d=6)
                 ],
                 category="Per-Unit System",
                 difficulty="Medium",
@@ -734,9 +814,8 @@ def t_line_impedance(R: dict, rng: random.Random, C: List[int]) -> List[MCQ]:
                 question=ask_for_branch(br, "the impedance magnitude"),
                 correct=fmu(z, "p.u.", 6),
                 distractors=[
-                    fmu(rv + xv, "p.u.", 6),
-                    fmu(abs(rv - xv), "p.u.", 6),
-                    fmu(2 * z, "p.u.", 6),
+                    fmu(x, "p.u.", 6)
+                    for x in mistake_dist([rv + xv, abs(rv - xv), 2 * z], z, rng, d=6)
                 ],
                 category="Line Parameters",
                 difficulty="Medium",
@@ -765,9 +844,8 @@ def t_apparent_power_branch(R: dict, rng: random.Random, C: List[int]) -> List[M
                 question=ask_for_branch(br, "the from-end apparent power"),
                 correct=fmu(s, "MVA"),
                 distractors=[
-                    fmu(abs(pf) + abs(qf), "MVA"),
-                    fmu(abs(pf - qf), "MVA"),
-                    fmu(1.1 * s, "MVA"),
+                    fmu(x, "MVA")
+                    for x in mistake_dist([abs(pf) + abs(qf), abs(pf - qf), 1.1 * s], s, rng)
                 ],
                 category="Branch Flow",
                 difficulty="Medium",
@@ -855,9 +933,8 @@ def t_gen_reserve(R: dict, rng: random.Random, C: List[int]) -> List[MCQ]:
                 question=ask_for_gen(gen, "the available reserve"),
                 correct=fmu(reserve, "MW"),
                 distractors=[
-                    fmu(p, "MW"),
-                    fmu(pmax, "MW"),
-                    fmu(reserve / 2, "MW"),
+                    fmu(x, "MW")
+                    for x in mistake_dist([p, pmax, reserve / 2], reserve, rng)
                 ],
                 category="Generator Reserve",
                 difficulty="Medium",
@@ -951,9 +1028,8 @@ def t_cross_table_loss(R: dict, rng: random.Random, C: List[int]) -> List[MCQ]:
                 question=ask_for_branch(br, "the active power loss"),
                 correct=fmu(pl, "MW"),
                 distractors=[
-                    fmu(pf - pt, "MW"),
-                    fmu(abs(pf) + abs(pt), "MW"),
-                    fmu(-pl, "MW"),
+                    fmu(x, "MW")
+                    for x in mistake_dist([pf - pt, abs(pf) + abs(pt), -pl], pl, rng)
                 ],
                 category="Branch Losses",
                 difficulty="Hard",
@@ -972,9 +1048,8 @@ def t_cross_table_loss(R: dict, rng: random.Random, C: List[int]) -> List[MCQ]:
                 question=ask_for_branch(br, "the reactive power loss"),
                 correct=fmu(ql, "Mvar"),
                 distractors=[
-                    fmu(qf - qt, "Mvar"),
-                    fmu(abs(qf) + abs(qt), "Mvar"),
-                    fmu(-ql, "Mvar"),
+                    fmu(x, "Mvar")
+                    for x in mistake_dist([qf - qt, abs(qf) + abs(qt), -ql], ql, rng)
                 ],
                 category="Branch Losses",
                 difficulty="Hard",
@@ -1023,9 +1098,8 @@ def t_margin_to_limit(R: dict, rng: random.Random, C: List[int]) -> List[MCQ]:
             question=ask_for_branch(critical, "the remaining thermal margin"),
             correct=fmu(margin, "%"),
             distractors=[
-                fmu(loading, "%"),
-                fmu(margin / 2, "%"),
-                fmu(margin * 2, "%"),
+                fmu(x, "%")
+                for x in mistake_dist([loading, margin / 2, margin * 2], margin, rng)
             ],
             category="Constraint Analysis",
             difficulty="Hard",
@@ -1107,9 +1181,8 @@ def t_system_statistics(R: dict, rng: random.Random, C: List[int]) -> List[MCQ]:
                 question="What is the average bus voltage magnitude?",
                 correct=fmu(avg_vm, "p.u."),
                 distractors=[
-                    fmu(min(vms), "p.u."),
-                    fmu(max(vms), "p.u."),
-                    fmu(avg_vm + 0.05, "p.u."),
+                    fmu(x, "p.u.")
+                    for x in numeric_dist(avg_vm, rng, spread=0.02, floor=0.1)
                 ],
                 category="System Statistics",
                 difficulty="Hard",
@@ -1162,9 +1235,8 @@ def t_system_statistics(R: dict, rng: random.Random, C: List[int]) -> List[MCQ]:
                 question="What is the average active power loss per line?",
                 correct=fmu(avg_loss, "MW"),
                 distractors=[
-                    fmu(sum(losses), "MW"),
-                    fmu(max(losses), "MW"),
-                    fmu(avg_loss * 2, "MW"),
+                    fmu(x, "MW")
+                    for x in mistake_dist([sum(losses), max(losses), avg_loss * 2], avg_loss, rng)
                 ],
                 category="System Statistics",
                 difficulty="Hard",
@@ -1204,9 +1276,8 @@ def t_apparent_power_loss(R: dict, rng: random.Random, C: List[int]) -> List[MCQ
                 question=ask_for_branch(br, "the apparent power loss"),
                 correct=fmu(sl, "MVA"),
                 distractors=[
-                    fmu(abs(pl) + abs(ql), "MVA"),
-                    fmu(abs(pl - ql), "MVA"),
-                    fmu(1.5 * sl, "MVA"),
+                    fmu(x, "MVA")
+                    for x in mistake_dist([abs(pl) + abs(ql), abs(pl - ql), 1.5 * sl], sl, rng)
                 ],
                 category="Branch Losses",
                 difficulty="Hard",
@@ -1237,9 +1308,10 @@ def t_total_reserve(R: dict, rng: random.Random, C: List[int]) -> List[MCQ]:
             question="What is the total spinning reserve in the system?",
             correct=fmu(total_reserve, "MW"),
             distractors=[
-                fmu(total_pmax, "MW"),
-                fmu(total_reserve / 2, "MW"),
-                fmu(total_reserve * 1.5, "MW"),
+                fmu(x, "MW")
+                for x in mistake_dist(
+                    [total_pmax, total_reserve / 2, total_reserve * 1.5], total_reserve, rng
+                )
             ],
             category="System Reserve",
             difficulty="Hard",
@@ -1293,9 +1365,8 @@ def t_angle_difference(R: dict, rng: random.Random, C: List[int]) -> List[MCQ]:
                 question=ask_for_branch(br, "the bus angle difference"),
                 correct=fmu(delta, "°"),
                 distractors=[
-                    fmu(va_t - va_f, "°"),
-                    fmu(abs(delta) * 2, "°"),
-                    fmu(delta / 2, "°"),
+                    fmu(x, "°")
+                    for x in mistake_dist([va_t - va_f, abs(delta) * 2, delta / 2], delta, rng)
                 ],
                 category="Angle Analysis",
                 difficulty="Hard",
@@ -1337,9 +1408,8 @@ def t_branch_current_magnitude(R: dict, rng: random.Random, C: List[int]) -> Lis
                 question=ask_for_branch(br, "the current magnitude"),
                 correct=fmu(i_mag, "p.u.", 6),
                 distractors=[
-                    fmu(sf_pu * vm_f, "p.u.", 6),
-                    fmu(sf_pu, "p.u.", 6),
-                    fmu(2 * i_mag, "p.u.", 6),
+                    fmu(x, "p.u.", 6)
+                    for x in mistake_dist([sf_pu * vm_f, sf_pu, 2 * i_mag], i_mag, rng, d=6)
                 ],
                 category="Branch Current",
                 difficulty="Hard",
@@ -1485,9 +1555,8 @@ def t_total_apparent_loss(R: dict, rng: random.Random, C: List[int]) -> List[MCQ
             question="What is the total apparent power loss in the system?",
             correct=fmu(sl, "MVA"),
             distractors=[
-                fmu(pl + ql, "MVA"),
-                fmu(abs(pl - ql), "MVA"),
-                fmu(1.5 * sl, "MVA"),
+                fmu(x, "MVA")
+                for x in mistake_dist([pl + ql, abs(pl - ql), 1.5 * sl], sl, rng)
             ],
             category="System Losses",
             difficulty="Hard",
