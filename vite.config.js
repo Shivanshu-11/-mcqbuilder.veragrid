@@ -1,13 +1,28 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
+import fs from "node:fs";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { createAgentApiMiddleware } from "./server/agentApi.js";
 
-// PSCAD (Python backend) location. Defaults to the sibling ../PSCAD folder for
-// local development; override with PSCAD_DIR (e.g. ./backend in the container).
-const PSCAD_DIR = process.env.PSCAD_DIR
-  ? path.resolve(process.env.PSCAD_DIR)
-  : path.resolve(process.cwd(), "../PSCAD");
+const ROOT = path.dirname(fileURLToPath(import.meta.url));
+
+// Python backend location, in priority order:
+// - PSCAD_DIR: explicit override.
+// - ../PSCAD: the upstream working copy, when developing next to it.
+// - ./backend: the vendored copy that ships with this repo (fresh clones).
+function resolvePscadDir() {
+  if (process.env.PSCAD_DIR) {
+    return path.resolve(process.env.PSCAD_DIR);
+  }
+  const sibling = path.resolve(ROOT, "../PSCAD");
+  if (fs.existsSync(sibling)) {
+    return sibling;
+  }
+  return path.join(ROOT, "backend");
+}
+
+const PSCAD_DIR = resolvePscadDir();
 
 function createAgentApiPlugin() {
   const handler = createAgentApiMiddleware({ pscadDir: PSCAD_DIR });
@@ -15,6 +30,7 @@ function createAgentApiPlugin() {
     name: "veragrid-agent-api",
     configureServer(server) {
       server.middlewares.use(handler);
+      server.config.logger.info(`[veragrid] python backend dir: ${PSCAD_DIR}`);
     },
   };
 }

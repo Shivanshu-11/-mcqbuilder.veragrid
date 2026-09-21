@@ -22,3 +22,19 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Python backend
+__pycache__/
+*.py[cod]
+.venv
+.venv312
+venv
+
+# Generated benchmark artifacts (raw runs, figures, report PDFs)
+backend/benchmark_results/
+
+# Standalone benchmark project with its own git repo
+veragrid-llm-benchmark/
+
+# Local agent/editor state
+.claude/settings.local.json
